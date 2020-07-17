@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import quote
 
 
@@ -8,6 +9,12 @@ class Base(object):
     def __init__(self, config, ruta):
         self.config = config
         self.ruta = ruta
+
+    def crear_google_storage_url(self, archivo):
+        """ Crear URL a Google Starage """
+        archivo_relativa_ruta = str(archivo)[len(self.config.deposito_ruta):]
+        url = quote(self.config.google_storage_url + archivo_relativa_ruta, safe=':/')
+        return(url)
 
     def separar_fecha_descripcion(self, archivo, distrito=None, autoridad=None):
         """ Separar fecha y descripción, entrega diccionario con el renglón """
@@ -29,11 +36,12 @@ class Base(object):
             descripcion = ' '.join(separados[3:]).title()
         else:
             descripcion = ''
-        # Archivo
-        archivo_relativa_ruta = str(archivo)[len(self.config.deposito_ruta):]
-        url = quote(self.config.google_storage_url + archivo_relativa_ruta, safe=':/')
         # Renglón
-        renglon = {'fecha': fecha, 'descripcion': descripcion, 'archivo': url}
+        renglon = {
+            'fecha': fecha,
+            'descripcion': descripcion,
+            'archivo': self.crear_google_storage_url(archivo),
+        }
         if distrito is not None:
             renglon['distrito'] = distrito.nombre
         if autoridad is not None:
@@ -65,11 +73,13 @@ class Base(object):
             descripcion = ' '.join(separados[5:]).title()
         else:
             descripcion = ''
-        # Archivo
-        archivo_relativa_ruta = str(archivo)[len(self.config.deposito_ruta):]
-        url = quote(self.config.google_storage_url + archivo_relativa_ruta, safe=':/')
         # Renglón
-        renglon = {'fecha': fecha, 'expediente': expediente, 'descripcion': descripcion, 'archivo': url}
+        renglon = {
+            'fecha': fecha,
+            'expediente': expediente,
+            'descripcion': descripcion,
+            'archivo': self.crear_google_storage_url(archivo),
+        }
         if distrito is not None:
             renglon['distrito'] = distrito.nombre
         if autoridad is not None:
@@ -106,23 +116,29 @@ class Base(object):
             p_genero = 'Sí'
         else:
             p_genero = 'No'
-        # Archivo
-        archivo_relativa_ruta = str(archivo)[len(self.config.deposito_ruta):]
-        url = quote(self.config.google_storage_url + archivo_relativa_ruta, safe=':/')
         # Renglón
-        renglon = {'fecha': fecha, 'sentencia': sentencia, 'expediente': expediente, 'genero': p_genero, 'archivo': url}
+        renglon = {
+            'fecha': fecha,
+            'sentencia': sentencia,
+            'expediente': expediente,
+            'genero': p_genero,
+            'archivo': self.crear_google_storage_url(archivo),
+        }
         if distrito is not None:
             renglon['distrito'] = distrito.nombre
         if autoridad is not None:
             renglon['autoridad'] = autoridad.nombre
         return(renglon)
 
-    def guardar_json(self):
-        """ Guardar JSON """
-        ruta = self.crear_ruta_json()
+    def guardar(self, ruta, contenido):
+        """ Guardar archivo JSON, requiere la ruta como Path y el contenido como texto, entrega la ruta como texto """
+        if not isinstance(ruta, Path):
+            raise Exception('ERROR: Al guardar la ruta no es instancia de Path.')
+        if not isinstance(contenido, str):
+            raise Exception('ERROR: Al guardar el contenido no es texto.')
         padre_dir = ruta.parent
         if not padre_dir.exists():
             padre_dir.mkdir(parents=True)
         with open(ruta, 'w') as puntero:
-            puntero.write(self.crear_contenido_json())
+            puntero.write(contenido)
         return(str(ruta))

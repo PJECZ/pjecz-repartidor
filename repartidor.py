@@ -38,8 +38,8 @@ def rastrear(config):
 
 @cli.command()
 @pass_config
-def guardar_json_por_autoridad(config):
-    """ Crear JSON """
+def guardar_completos(config):
+    """ Guardar archivos JSON completos, para cada autoridad todos sus archivos """
     click.echo('Voy a guardar archivos JSON por autoridad...')
     deposito = Deposito(config, config.deposito_ruta)
     deposito.rastrear()
@@ -47,21 +47,48 @@ def guardar_json_por_autoridad(config):
         distrito.rastrear()
         for autoridad in distrito.autoridades:
             autoridad.rastrear()
-            click.echo(autoridad.guardar_json())
+            click.echo(autoridad.guardar_completo())
     sys.exit(0)
 
 
 @cli.command()
 @pass_config
-def guardar_json_por_fecha(config):
-    """ Crear JSON """
+def guardar_diario(config):
+    """ Guardar archivo JSON diario, todos los archivos de la fecha dada """
     click.echo('Voy a guardar archivos JSON por fecha...')
     deposito = Deposito(config, config.deposito_ruta)
     deposito.rastrear()
-    click.echo(deposito.guardar_json())
+    click.echo(deposito.guardar_diario())
+    sys.exit(0)
+
+
+@cli.command()
+@pass_config
+@click.option('--sufijo', default='', type=str, help='Sufijo para nombre del archivo, use HHMM')
+def guardar_reporte_deposito(config, sufijo):
+    """ Guardar archivo JSON con el reporte del depósito """
+    click.echo('Voy a guardar archivos JSON con reportes de los distritos...')
+    deposito = Deposito(config, config.deposito_ruta)
+    deposito.rastrear()
+    click.echo(deposito.guardar_reporte(sufijo))
+    sys.exit(0)
+
+
+@cli.command()
+@pass_config
+def guardar_reportes_distritos(config):
+    """ Guardar archivos JSON con reportes por distrito """
+    click.echo('Voy a guardar archivos JSON con reportes de las autoridades...')
+    deposito = Deposito(config, config.deposito_ruta)
+    deposito.rastrear()
+    for distrito in deposito.distritos:
+        distrito.rastrear()
+        click.echo(distrito.guardar_reporte())
     sys.exit(0)
 
 
 cli.add_command(rastrear)
-cli.add_command(guardar_json_por_autoridad)
-cli.add_command(guardar_json_por_fecha)
+cli.add_command(guardar_completos)
+cli.add_command(guardar_diario)
+cli.add_command(guardar_reporte_deposito)
+cli.add_command(guardar_reportes_distritos)
